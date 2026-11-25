@@ -3885,13 +3885,17 @@ void main(uint3 id : SV_DispatchThreadID) {
             return; // no host GPU
         };
         let spare = heap.spare;
+        // The dynamic slots start after the title's: at 4 here, unless the
+        // host caps the view heap (NVIDIA, 1,000,000), where the title keeps
+        // more slots than it asked for.
+        let first = heap.count;
         // [0, 50) and [50, spare - 10): the search goes on at spare - 10,
         // and the last 10 slots were never taken.
         let a = heap.dynamic(50).unwrap();
         let b = heap.dynamic(spare - 60).unwrap();
-        assert_eq!((a, b), (4, 4 + 50));
+        assert_eq!((a, b), (first, first + 50));
         // [spare - 20, spare - 10) given back: one run of 20, across it.
         heap.release(b + spare - 70, 10);
-        assert_eq!(heap.dynamic(20), Some(4 + spare - 20));
+        assert_eq!(heap.dynamic(20), Some(first + spare - 20));
     }
 }
